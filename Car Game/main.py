@@ -5,7 +5,7 @@ import os
 from pygame.locals import *
 from utils import scale_image, blit_rotate_center, blit_rotate_center1
 
-
+pygame.mixer.init()
 GRASS = scale_image(pygame.image.load("imgs/grass.jpg"), 2.5)
 TRACK = scale_image(pygame.image.load('imgs/track.png'), 0.9)
 
@@ -24,7 +24,15 @@ WIDTH, HEIGHT = TRACK.get_width(), TRACK.get_height()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Racing Game!")
 
-FPS = 120
+def play():
+    pygame.mixer.music.load(os.path.join('crash.ogg'))
+    pygame.mixer.music.play(loops=0)
+
+def engine():
+    pygame.mixer.music.load(os.path.join('engine.mp3'))
+    pygame.mixer.music.play(loops=0)
+
+FPS = 60
 
 class AbstractCar:
 
@@ -36,7 +44,7 @@ class AbstractCar:
         self.angle = 0
         self.x, self.y = self.START_POS
         self.acceleration = 0.25
-
+        self.lives = 15
         
     def rotate(self, left=False, right=False):
         if left:
@@ -48,7 +56,13 @@ class AbstractCar:
         blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
 
     def move_forward(self):
-        self.vel = min(self.vel + self.acceleration, self.max_vel)
+        if self.lives >= 0:
+            self.vel = min(self.vel + self.acceleration, self.max_vel * .8)
+        else:
+            self.vel = min(self.vel + self.acceleration, self.max_vel * .1)
+        
+        engine()
+        
         self.move()
 
     def move_backward(self):
@@ -77,13 +91,16 @@ class AbstractCar:
 
 class PlayerCar(AbstractCar):
     IMG = RED_CAR
-    START_POS = (140, 190)
+    START_POS = (160, 200)
     
     def reduce_speed(self):
         self.vel = max(self.vel - self.acceleration / 2, 0)
         self.move()
     def bounce(self):
         self.vel = - self.vel 
+        self.lives -= 1
+        print (self.lives)
+        play()
         self.move()
 
 
@@ -124,8 +141,8 @@ def move_player(player_car):
 
 
 class AbstractCar1:
-
     def __init__(self, max_vel1, rotation_vel1):
+        self.lives = 15
         self.img1= self.IMG1
         self.max_vel1 = max_vel1
         self.vel1 = 0
@@ -134,6 +151,9 @@ class AbstractCar1:
         self.x1, self.y1 = self.START_POS1
         self.acceleration1 = 0.25
 
+        
+          
+        
         
     def rotate1(self, left=False, right=False):
         if left:
@@ -145,7 +165,11 @@ class AbstractCar1:
         blit_rotate_center1(win1, self.img1, (self.x1, self.y1), self.angle1)
 
     def move_forward1(self):
-        self.vel1 = min(self.vel1 + self.acceleration1, self.max_vel1)
+        if self.lives >= 0:
+            self.vel1 = min(self.vel1 + self.acceleration1, self.max_vel1 * .8)
+        else:
+            self.vel1 = min(self.vel1 + self.acceleration1, self.max_vel1 * .1)
+
         self.move1()
 
     def move_backward1(self):
@@ -166,21 +190,27 @@ class AbstractCar1:
         offset1 = (int(self.x1 - x1), int(self.y1 - y1))
         poi1 = mask.overlap(car_mask1, offset1)
         return poi1
+        
     
     def reset1(self):
         self.x1, self.y1 = self.START_POS1
         self.angle1 = 0
         self.vel1 = 0
+        
+
 
 class PlayerCar1(AbstractCar1):
     IMG1 = GREEN_CAR
-    START_POS1 = (120, 190)
+    START_POS1 = (120, 200)
     
     def reduce_speed1(self):
         self.vel1 = max(self.vel1 - self.acceleration1 / 2, 0)
         self.move1()
     def bounce1(self):
         self.vel1 = - self.vel1
+        self.lives -= 1
+        print (self.lives)
+        play()
         self.move1()
 
 
@@ -240,7 +270,8 @@ while run:
             player_car.bounce()
         else:
             player_car.reset()
-            print('finish')
+            pygame.quit()
+            
 
 
 
@@ -251,10 +282,9 @@ while run:
     if finish_poi_collide != None:
         if finish_poi_collide[1] == 0:
             player_car1.bounce1()
-        else:
+        else: 
             player_car1.reset1()
-            print('finish')
-
+            pygame.quit()
 
 
 
